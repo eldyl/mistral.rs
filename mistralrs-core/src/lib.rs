@@ -314,6 +314,8 @@ impl MistralRs {
             category: category.clone(),
         };
 
+        let engine_id = ENGINE_ID.fetch_add(1, atomic::Ordering::SeqCst);
+
         let engine_handler = thread::spawn(move || {
             #[cfg(feature = "metal")]
             objc::rc::autoreleasepool(move || {
@@ -332,6 +334,7 @@ impl MistralRs {
                         search_embedding_model,
                     )
                     .expect("Engine creation failed.");
+                    *engine.id.lock().await = engine_id;
                     Arc::new(engine).run().await;
                 })
             });
@@ -353,12 +356,12 @@ impl MistralRs {
                         search_embedding_model,
                     )
                     .expect("Engine creation failed.");
+                    *engine.id.lock().await = engine_id;
                     Arc::new(engine).run().await;
                 })
             }
         });
 
-        let engine_id = ENGINE_ID.fetch_add(1, atomic::Ordering::SeqCst);
 
         if distributed::is_daemon() {
             let request_sender = sender.write().unwrap().clone();
@@ -511,6 +514,7 @@ impl MistralRs {
             Ok(())
         } else {
             // critical section. A panic here could lead to poisoned locks
+            let engine_id = self.engine_id;
             let new_engine_handler = thread::spawn(move || {
                 let rt = Runtime::new().unwrap();
                 rt.block_on(async move {
@@ -527,6 +531,7 @@ impl MistralRs {
                         reboot_state.search_embedding_model,
                     )
                     .expect("Engine creation failed");
+                    *engine.id.lock().await = engine_id;
                     Arc::new(engine).run().await;
                 });
             });
