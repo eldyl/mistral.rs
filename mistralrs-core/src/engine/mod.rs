@@ -71,7 +71,7 @@ pub struct Engine {
     pipeline: Arc<Mutex<dyn Pipeline>>,
     bert_pipeline: Arc<Mutex<Option<BertPipeline>>>,
     scheduler: Arc<Mutex<dyn Scheduler>>,
-    id: Arc<Mutex<usize>>,
+    pub(crate) id: Arc<Mutex<usize>>,
     truncate_sequence: bool,
     no_kv_cache: bool,
     prefix_cacher: Arc<Mutex<PrefixCacheManagerV2>>,
