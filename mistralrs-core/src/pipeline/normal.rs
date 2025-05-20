@@ -637,15 +637,15 @@ impl Loader for NormalLoader {
                 .expect("bos_token_id/eos_token_id missing in generation_config.json")
         });
 
+        let chat_template_explicit = paths
+            .get_chat_template_explicit()
+            .as_ref()
+            .map(|x| x.to_string_lossy().to_string());
         let chat_template = get_chat_template(
             paths,
-            &self.jinja_explicit,
-            &paths
-                .get_chat_template_explicit()
-                .as_ref()
-                .map(|x| x.to_string_lossy().to_string())
-                .clone(),
-            &self.chat_template,
+            self.jinja_explicit.as_ref(),
+            chat_template_explicit.as_ref(),
+            self.chat_template.as_ref(),
             None,
         );
 
@@ -729,7 +729,7 @@ impl Loader for NormalLoader {
         }
 
         // Only if loading from UQFF
-        if loading_isq || (self.config.topology.is_some() && self.config.from_uqff.is_none()) {
+        if (loading_isq || self.config.topology.is_some()) && self.config.from_uqff.is_none() {
             let imatrix_source = match (
                 self.config.imatrix.as_ref(),
                 self.config.calibration_file.is_some(),
